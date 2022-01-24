@@ -3,17 +3,8 @@ const Shop = require("../models/shop");
 const Cart = require("../models/cart");
 const Order = require("../models/order");
 const bcrypt = require("bcrypt");
-const nodemailer = require("nodemailer");
-const sendgridTransport = require("nodemailer-sendgrid-transport");
-
-const transporter = nodemailer.createTransport(
-  sendgridTransport({
-    auth: {
-      api_key:
-        "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",
-    },
-  })
-);
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey("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")
 
 exports.postLogin = async (req, res) => {
   try {
@@ -21,13 +12,13 @@ exports.postLogin = async (req, res) => {
     const password = req.body.password;
 
     const user = await User.findOne({ email: email });
-    !user && res.status(400).jsonp({ message: "Không tìm thấy tài khoản" });
+    !user && res.status(400).json("Không tìm thấy tài khoản");
 
     const validPassword = await bcrypt.compare(password, user.password);
-    !validPassword && res.status(400).jsonp({ message: "Sai mật khẩu" });
+    !validPassword && res.status(400).json("Sai mật khẩu");
 
     !user.verify &&
-      res.status(400).jsonp({ message: "Tài khoản chưa xác nhận" });
+      res.status(400).json("Tài khoản chưa xác nhận");
 
     const userLogin = {
       id: user._id,
@@ -68,17 +59,17 @@ exports.postRegister = async (req, res) => {
       orderId: null,
       cartId: null,
     });
-
-    await transporter.sendMail({
+    
+    await sgMail.send({
       to: email,
-      from: "tienhuycodeforces@gmail.com",
+      from: "tienhuy1801@gmail.com",
       subject: "Verify account!",
       html: `
-      <p>You requested a verify account</p>
-      <p>Click this <a href="http://localhost:8080/auth/verify/${newUser._id}">link</a> to verify account</p>
+      <p>Bạn nhận được yêu cầu xác nhận tài khoản</p>
+      <p>Nhấn vào <a href="http://localhost:8080/auth/verify/${newUser._id}">link</a> để xác nhận tài khoản</p>
     `,
     });
-
+    
     const shop = new Shop();
     await shop.save();
     newUser.shopId = shop._id;
@@ -90,16 +81,7 @@ exports.postRegister = async (req, res) => {
     newUser.cartId = cart._id;
     await newUser.save();
 
-    const user = {
-      id: newUser._id,
-      email: email,
-      fullName: fullName,
-      place: place,
-      shopId: shop._id,
-      orderId: order._id,
-      cartId: cart._id,
-    };
-    res.status(200).json(user);
+    res.status(200).json("Đăng ký thành công");
   } catch (err) {
     res.status(500).json(err);
   }
@@ -112,7 +94,7 @@ exports.postEditProfile = async (req, res) => {
     const userId = req.body.userId;
 
     const user = await User.findOne({ _id: userId });
-    !user && res.status(404).json({ message: "Không tìm thấy tài khoản" });
+    !user && res.status(404).json("Không tìm thấy tài khoản");
 
     user.fullName = fullName;
     user.place = place;
@@ -135,37 +117,37 @@ exports.postEditProfile = async (req, res) => {
 
 exports.postResetRequest = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const email = req.body.email
+    const user = await User.findOne({ email: email });
     !user && res.status(404).json("Email chưa được đăng ký");
 
-    await transporter.sendMail({
-      to: req.body.email,
-      from: "tienhuycodeforces@gmail.com",
+    await sgMail.send({
+      to: email,
+      from: "tienhuy1801@gmail.com",
       subject: "Password reset!",
       html: `
-      <p>You requested a password reset</p>
-      <p>Click this <a href="http://localhost:3000/reset/${user._id}">link</a> to set a new password</p>
+      <p>Bạn nhận được yêu cầu đổi mật khẩu</p>
+      <p>Nhấn vào <a href="http://localhost:3000/reset/${user._id}">link</a> để tạo mật khẩu mới</p>
     `,
     });
-    res.status(201).json({ message: "Đã gửi email thành công" });
+    res.status(201).json("Đã gửi yêu cầu đổi mật khẩu");
   } catch (err) {
     res.status(500).json(err);
   }
 };
 
 exports.postChangePassword = async (req, res) => {
-  const userId = req.params.userId;
-  const password = req.body.password;
   try {
+    const userId = req.params.userId;
+    const password = req.body.password;
     const user = await User.findOne({ _id: userId });
     !user && res.status(404).json("Email chưa được đăng ký");
-    console.log(password);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     user.password = hashedPassword;
     user.save();
 
-    res.status(201).json({ message: "Đổi mật khẩu thành công" });
+    res.status(201).json("Đổi mật khẩu thành công");
   } catch (err) {
     res.status(500).json(err);
   }
@@ -179,7 +161,7 @@ exports.verifyAcc = async (req, res) => {
 
     user.verify = true;
     user.save();
-    res.status(201).json({ message: "Xác thực thành công" });
+    res.status(201).json("Xác thực thành công");
   } catch (err) {
     res.status(500).json(err);
   }

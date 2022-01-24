@@ -43,7 +43,7 @@ exports.addOrder = async (req, res) => {
     cart.products = [];
     cart.price = 0;
     await cart.save();
-    res.status(201).json({ message: "Đặt hàng thành công" });
+    res.status(201).json("Đặt hàng thành công");
   } catch (error) {
     res.status(500).json(error);
   }

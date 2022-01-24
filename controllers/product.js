@@ -36,7 +36,7 @@ exports.addProduct = async (req, res) => {
     shop.products = productShop;
     await shop.save();
 
-    res.status(201).json({ message: "Thêm thành công" });
+    res.status(201).json("Thêm thành công");
   } catch (err) {
     res.status(500).json(err);
   }
@@ -52,7 +52,7 @@ exports.editProduct = async (req, res) => {
     product.description = req.body.description;
     await product.save();
 
-    res.status(201).json({ message: "Sửa thành công" });
+    res.status(201).json("Sửa thành công");
   } catch (err) {
     res.status(500).json(err);
   }

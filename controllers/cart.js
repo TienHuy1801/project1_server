@@ -52,7 +52,7 @@ exports.removeFromCart = async (req, res) => {
     );
     cart.price -= price;
     await cart.save();
-    res.status(201).json({ message: "Xóa thành công" });
+    res.status(201).json("Xóa thành công");
   } catch (error) {
     res.status(500).json(error);
   }
